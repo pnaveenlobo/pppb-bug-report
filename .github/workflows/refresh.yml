@@ -1,0 +1,30 @@
+name: Refresh PPPB Bug Report
+
+on:
+  schedule:
+    - cron: "0 8 * * 1-5"   # 8am UTC Mon-Fri (3am ET)
+  workflow_dispatch:          # manual trigger via API or GitHub UI
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests matplotlib numpy openai python-dotenv PyNaCl
+
+      - name: Run report
+        env:
+          CONFLUENCE_EMAIL: ${{ secrets.CONFLUENCE_EMAIL }}
+          CONFLUENCE_API_TOKEN: ${{ secrets.CONFLUENCE_API_TOKEN }}
+          AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOY: ${{ secrets.AZURE_OPENAI_DEPLOY }}
+          CONFLUENCE_SPACE_KEY: ${{ secrets.CONFLUENCE_SPACE_KEY }}
+          CONFLUENCE_PAGE_ID: ${{ secrets.CONFLUENCE_PAGE_ID }}
+        run: python report/prod_bugs_jira.py
