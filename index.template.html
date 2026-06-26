@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PPPB Bug Report â€” Refresh</title>
+<title>PPPB Bug Report &mdash; Refresh</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;display:flex;align-items:center;justify-content:center;min-height:100vh}
@@ -28,12 +28,12 @@
 </head>
 <body>
 <div class="card">
-  <div class="icon">ðŸ›</div>
+  <div class="icon">&#x1F41B;</div>
   <h1>PPPB Production Bug Report</h1>
   <p class="subtitle">Pulls live data from Jira PPPB and publishes the updated report to Confluence. Takes ~60 seconds.</p>
 
   <button class="btn" id="refreshBtn" onclick="triggerRefresh()">
-    <span id="btnIcon">ðŸ”„</span>
+    <span id="btnIcon">&#x21BA;</span>
     <span id="btnText">Refresh Report Now</span>
   </button>
 
@@ -41,12 +41,12 @@
 
   <div class="confluence-link">
     <a href="https://veradigm.atlassian.net/wiki/spaces/Payerpath/pages/6917324894/PPPB+Production+Bug+Report" target="_blank">
-      ðŸ“„ View Confluence Report â†’
+      &#x1F4C4; View Confluence Report &rarr;
     </a>
   </div>
 
   <div class="meta">
-    Auto-refreshes Monâ€“Fri 8 AM UTC &nbsp;Â·&nbsp;
+    Auto-refreshes Mon&ndash;Fri 8 AM UTC &nbsp;&middot;&nbsp;
     <a href="https://github.com/pnaveenlobo/pppb-bug-report/actions" target="_blank">View run history</a>
   </div>
 </div>
@@ -63,9 +63,9 @@ async function triggerRefresh() {
   const stat = document.getElementById("status");
   btn.disabled = true;
   document.getElementById("btnIcon").innerHTML = '<span class="spinner"></span>';
-  document.getElementById("btnText").textContent = "Triggeringâ€¦";
+  document.getElementById("btnText").textContent = "Triggering...";
   stat.className = "status running";
-  stat.textContent = "Sending request to GitHub Actionsâ€¦";
+  stat.textContent = "Sending request to GitHub Actions...";
 
   try {
     const r = await fetch(
@@ -76,9 +76,9 @@ async function triggerRefresh() {
     );
     if (r.status === 204) {
       stat.className = "status running";
-      stat.textContent = "Workflow triggered! Checking progressâ€¦";
+      stat.textContent = "Workflow triggered! Checking progress...";
       document.getElementById("btnIcon").innerHTML = '<span class="spinner"></span>';
-      document.getElementById("btnText").textContent = "Runningâ€¦";
+      document.getElementById("btnText").textContent = "Running...";
       pollWorkflow();
     } else {
       stat.className = "status error";
@@ -95,7 +95,7 @@ async function triggerRefresh() {
 function resetBtn() {
   const btn = document.getElementById("refreshBtn");
   btn.disabled = false;
-  document.getElementById("btnIcon").textContent = "ðŸ”„";
+  document.getElementById("btnIcon").textContent = "&#x21BA;";
   document.getElementById("btnText").textContent = "Refresh Report Now";
 }
 
@@ -116,8 +116,8 @@ async function pollWorkflow() {
         clearInterval(iv);
         if (run.conclusion === "success") {
           stat.className = "status success";
-          stat.innerHTML = `Report updated! <a href="${CF_URL}" target="_blank" style="color:#38a169;font-weight:700">Open Confluence Report â†’</a>`;
-          document.getElementById("btnIcon").textContent = "âœ…";
+          stat.innerHTML = `Report updated! <a href="${CF_URL}" target="_blank" style="color:#38a169;font-weight:700">Open Confluence Report &rarr;</a>`;
+          document.getElementById("btnIcon").textContent = "OK";
           document.getElementById("btnText").textContent = "Done!";
           setTimeout(resetBtn, 4000);
         } else {
@@ -126,10 +126,10 @@ async function pollWorkflow() {
           resetBtn();
         }
       } else {
-        stat.textContent = `Workflow ${run.status}â€¦ (${attempts * 5}s elapsed)`;
+        stat.textContent = `Workflow ${run.status}... (${attempts * 5}s elapsed)`;
       }
     } catch(e) {}
-    if (attempts > 40) { clearInterval(iv); stat.textContent += " â€” check Confluence manually."; resetBtn(); }
+    if (attempts > 40) { clearInterval(iv); stat.textContent += " - check Confluence manually."; resetBtn(); }
   }, 5000);
 }
 </script>
