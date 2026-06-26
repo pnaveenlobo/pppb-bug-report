@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PPPB Bug Report â€” Refresh</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:white;border-radius:16px;padding:48px 56px;box-shadow:0 4px 32px rgba(0,0,0,.10);text-align:center;max-width:520px;width:90%}
+  .icon{font-size:3.5rem;margin-bottom:16px}
+  h1{font-size:1.4rem;font-weight:700;color:#1a202c;margin-bottom:8px}
+  .subtitle{color:#718096;font-size:0.9rem;margin-bottom:32px;line-height:1.5}
+  .btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s;width:100%;justify-content:center}
+  .btn:hover{opacity:0.88}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+  .status{margin-top:20px;font-size:0.85rem;min-height:24px;line-height:1.5}
+  .status.running{color:#667eea}
+  .status.success{color:#38a169}
+  .status.error{color:#e53e3e}
+  .confluence-link{margin-top:24px}
+  .confluence-link a{color:#4f46e5;font-weight:600;text-decoration:none;font-size:0.9rem}
+  .meta{margin-top:24px;padding-top:18px;border-top:1px solid #edf2f7;font-size:0.75rem;color:#a0aec0}
+  .meta a{color:#a0aec0}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">ðŸ›</div>
+  <h1>PPPB Production Bug Report</h1>
+  <p class="subtitle">Pulls live data from Jira PPPB and publishes the updated report to Confluence. Takes ~60 seconds.</p>
+
+  <button class="btn" id="refreshBtn" onclick="triggerRefresh()">
+    <span id="btnIcon">ðŸ”„</span>
+    <span id="btnText">Refresh Report Now</span>
+  </button>
+
+  <div class="status" id="status"></div>
+
+  <div class="confluence-link">
+    <a href="https://veradigm.atlassian.net/wiki/spaces/Payerpath/pages/6917324894/PPPB+Production+Bug+Report" target="_blank">
+      ðŸ“„ View Confluence Report â†’
+    </a>
+  </div>
+
+  <div class="meta">
+    Auto-refreshes Monâ€“Fri 8 AM UTC &nbsp;Â·&nbsp;
+    <a href="https://github.com/pnaveenlobo/pppb-bug-report/actions" target="_blank">View run history</a>
+  </div>
+</div>
+
+<script>
+const OWNER    = "pnaveenlobo";
+const REPO     = "pppb-bug-report";
+const WORKFLOW = "refresh.yml";
+const CF_URL   = "https://veradigm.atlassian.net/wiki/spaces/Payerpath/pages/6917324894/PPPB+Production+Bug+Report";
+const GH_TOKEN = atob("__GH_DISPATCH_TOKEN_B64__");
+
+async function triggerRefresh() {
+  const btn  = document.getElementById("refreshBtn");
+  const stat = document.getElementById("status");
+  btn.disabled = true;
+  document.getElementById("btnIcon").innerHTML = '<span class="spinner"></span>';
+  document.getElementById("btnText").textContent = "Triggeringâ€¦";
+  stat.className = "status running";
+  stat.textContent = "Sending request to GitHub Actionsâ€¦";
+
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      { method:"POST",
+        headers:{Authorization:`token ${GH_TOKEN}`,Accept:"application/vnd.github.v3+json","Content-Type":"application/json"},
+        body:JSON.stringify({ref:"main"}) }
+    );
+    if (r.status === 204) {
+      stat.className = "status running";
+      stat.textContent = "Workflow triggered! Checking progressâ€¦";
+      document.getElementById("btnIcon").innerHTML = '<span class="spinner"></span>';
+      document.getElementById("btnText").textContent = "Runningâ€¦";
+      pollWorkflow();
+    } else {
+      stat.className = "status error";
+      stat.textContent = "Error " + r.status + ". Check the run history link below.";
+      resetBtn();
+    }
+  } catch(e) {
+    stat.className = "status error";
+    stat.textContent = "Network error: " + e.message;
+    resetBtn();
+  }
+}
+
+function resetBtn() {
+  const btn = document.getElementById("refreshBtn");
+  btn.disabled = false;
+  document.getElementById("btnIcon").textContent = "ðŸ”„";
+  document.getElementById("btnText").textContent = "Refresh Report Now";
+}
+
+async function pollWorkflow() {
+  const stat = document.getElementById("status");
+  let attempts = 0;
+  const iv = setInterval(async () => {
+    attempts++;
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs?per_page=1`,
+        {headers:{Authorization:`token ${GH_TOKEN}`,Accept:"application/vnd.github.v3+json"}}
+      );
+      const data = await r.json();
+      const run = data.workflow_runs?.[0];
+      if (!run) return;
+      if (run.status === "completed") {
+        clearInterval(iv);
+        if (run.conclusion === "success") {
+          stat.className = "status success";
+          stat.innerHTML = `Report updated! <a href="${CF_URL}" target="_blank" style="color:#38a169;font-weight:700">Open Confluence Report â†’</a>`;
+          document.getElementById("btnIcon").textContent = "âœ…";
+          document.getElementById("btnText").textContent = "Done!";
+          setTimeout(resetBtn, 4000);
+        } else {
+          stat.className = "status error";
+          stat.textContent = "Workflow finished with: " + run.conclusion + ". Check run history.";
+          resetBtn();
+        }
+      } else {
+        stat.textContent = `Workflow ${run.status}â€¦ (${attempts * 5}s elapsed)`;
+      }
+    } catch(e) {}
+    if (attempts > 40) { clearInterval(iv); stat.textContent += " â€” check Confluence manually."; resetBtn(); }
+  }, 5000);
+}
+</script>
+</body>
+</html>
