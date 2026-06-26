@@ -20,7 +20,8 @@ jobs:
         env:
           GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
         run: |
-          sed "s|__GH_DISPATCH_TOKEN__|${GH_DISPATCH_TOKEN}|g" index.template.html > index.html
+          TOKEN_B64=$(echo -n "${GH_DISPATCH_TOKEN}" | base64 -w 0)
+          sed "s|__GH_DISPATCH_TOKEN_B64__|${TOKEN_B64}|g" index.template.html > index.html
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
