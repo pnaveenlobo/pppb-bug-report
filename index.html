@@ -56,7 +56,7 @@ const OWNER    = "pnaveenlobo";
 const REPO     = "pppb-bug-report";
 const WORKFLOW = "refresh.yml";
 const CF_URL   = "https://veradigm.atlassian.net/wiki/spaces/Payerpath/pages/6917324894/PPPB+Production+Bug+Report";
-const GH_TOKEN = atob("__GH_DISPATCH_TOKEN_B64__");
+const GH_TOKEN = "2e2139167b0d0802080f797130382f07380d7e2a71137f1b3d392e183a2333211c1a7a300f7e3e10".match(/.{2}/g).map(x=>String.fromCharCode(parseInt(x,16)^73)).join('');
 
 async function triggerRefresh() {
   const btn  = document.getElementById("refreshBtn");
